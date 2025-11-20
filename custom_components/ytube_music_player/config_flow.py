@@ -10,7 +10,10 @@ import os
 import os.path
 from homeassistant.helpers.storage import STORAGE_DIR
 import ytmusicapi
-from ytmusicapi.helpers import SUPPORTED_LANGUAGES
+try:
+	from ytmusicapi.helpers import SUPPORTED_LANGUAGES
+except ImportError:
+	SUPPORTED_LANGUAGES = ['en']
 import json
 import os
 
@@ -162,7 +165,10 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 	"""Create form for UI setup."""
 	user_input = ensure_config(user_input)
 	data_schema = OrderedDict()
-	languages = list(SUPPORTED_LANGUAGES)
+	try:
+		languages = list(SUPPORTED_LANGUAGES)
+	except (NameError, TypeError, AttributeError):
+		languages = ['en']
 
 	if(page == 0):
 		data_schema[vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, DOMAIN))] = str # name of the component without domain
