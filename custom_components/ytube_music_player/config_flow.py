@@ -141,7 +141,10 @@ async def async_common_step_finish(self,user_input=None, option_flow = False):
 		'po_token': self.data.get(CONF_PO_TOKEN, ''),
 		'visitor_data': self.data.get(CONF_VISITOR_DATA, '')
 	}
-	await self.hass.async_add_executor_job(lambda: json.dump(cookie_data, open(self.data[CONF_HEADER_PATH], 'w')))
+	await self.hass.async_add_executor_job(lambda: (
+		os.makedirs(os.path.dirname(self.data[CONF_HEADER_PATH]), exist_ok=True),
+		json.dump(cookie_data, open(self.data[CONF_HEADER_PATH], 'w'))
+	))
 
 	if(self.data[CONF_ADVANCE_CONFIG]):
 		return self.async_show_form(step_id="adv_finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,4, option_flow)), errors=self._errors)
