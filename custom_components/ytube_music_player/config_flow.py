@@ -119,7 +119,7 @@ async def async_common_step_oauth(self, user_input=None, option_flow = False):  
 		if CONF_NAME in user_input:
 			self.data[CONF_NAME] = user_input[CONF_NAME].replace(DOMAIN_MP+".","") # make sure to erase "media_player.bla" -> bla
 
-	return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,user_input,3, option_flow)), errors=self._errors)
+	return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,user_input,1, option_flow)), errors=self._errors)
 
 
 
