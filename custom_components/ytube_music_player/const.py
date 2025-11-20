@@ -7,6 +7,7 @@ import logging
 import datetime
 import traceback
 import asyncio
+import json
 from collections import OrderedDict
 from ytmusicapi import YTMusic
 
@@ -269,7 +270,15 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 		if(oauth):
 			api = await hass.async_add_executor_job(lambda: YTMusic(auth=path,oauth_credentials=oauth,user=brand_id,language=language, po_token=po_token, visitor_data=visitor_data))
 		else:
-			api = await hass.async_add_executor_job(lambda: YTMusic(path,brand_id,None,None,language, po_token=po_token, visitor_data=visitor_data))
+			# Load cookie data from file
+			with open(path, 'r') as f:
+				cookie_data = json.load(f)
+			auth_dict = {
+				'cookies': cookie_data.get('cookies', ''),
+				'po_token': cookie_data.get('po_token', po_token),
+				'visitor_data': cookie_data.get('visitor_data', visitor_data)
+			}
+			api = await hass.async_add_executor_job(lambda: YTMusic(auth=auth_dict, user=brand_id, language=language))
 	except KeyError as err:
 		_LOGGER.debug("- Key exception")
 		if(str(err)=="'contents'"):
@@ -337,10 +346,7 @@ def ensure_config(user_input):
 	out[CONF_PROXY_URL] = ""
 	out[CONF_BRAND_ID] = ""
 	out[CONF_COOKIE] = ""
-	out[CONF_CLIENT_ID] = ""
-	out[CONF_CLIENT_SECRET] = ""
 	out[CONF_ADVANCE_CONFIG] = False
-	out[CONF_RENEW_OAUTH] = False
 	out[CONF_LIKE_IN_NAME] = DEFAULT_LIKE_IN_NAME
 	out[CONF_DEBUG_AS_ERROR] = DEFAULT_DEBUG_AS_ERROR
 	out[CONF_TRACK_LIMIT] = DEFAULT_TRACK_LIMIT

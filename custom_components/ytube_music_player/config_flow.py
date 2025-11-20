@@ -11,8 +11,8 @@ import os.path
 from homeassistant.helpers.storage import STORAGE_DIR
 import ytmusicapi
 from ytmusicapi.helpers import SUPPORTED_LANGUAGES
-from ytmusicapi.auth.oauth import OAuthCredentials, RefreshingToken
-import requests
+import json
+import os
 
 from collections import OrderedDict
 
@@ -41,13 +41,6 @@ class yTubeMusicFlowHandler(config_entries.ConfigFlow):
 
 	# we get here after the user click submit on the oauth screem
 	# lets check if oauth worked
-	async def async_step_oauth2(self, user_input=None):   # pylint: disable=unused-argument
-		return await async_common_step_oauth2(self, user_input)
-		
-	# we get here after the user click submit on the oauth screem
-	# lets check if oauth worked
-	async def async_step_oauth3(self, user_input=None):   # pylint: disable=unused-argument
-		return await async_common_step_oauth3(self, user_input)  # pylint: disable=unused-argument
 		
 	# will be called by sending the form, until configuration is done
 	async def async_step_finish(self,user_input=None):
@@ -85,7 +78,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 		# store old entry for later
 		self.data = dict(config_entry.options or config_entry.data)
 		self.data[CONF_HEADER_PATH+"_old"] = self.data[CONF_HEADER_PATH]
-		self.data[CONF_RENEW_OAUTH] = False
 
 
 	# will be called by sending the form, until configuration is done
@@ -97,15 +89,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 	async def async_step_oauth(self, user_input=None):   # pylint: disable=unused-argument
 		return await async_common_step_oauth(self, user_input, option_flow = True)
 
-	# we get here after the user click submit on the oauth screem
-	# lets check if oauth worked
-	async def async_step_oauth2(self, user_input=None):   # pylint: disable=unused-argument
-		return await async_common_step_oauth2(self, user_input, option_flow = True)
-		
-	# we get here after the user click submit on the oauth screem
-	# lets check if oauth worked
-	async def async_step_oauth3(self, user_input=None):   # pylint: disable=unused-argument
-		return await async_common_step_oauth3(self, user_input, option_flow = True)  # pylint: disable=unused-argument
 		
 	# will be called by sending the form, until configuration is done
 	async def async_step_finish(self,user_input=None):
@@ -128,8 +111,7 @@ async def async_common_step_user(self, user_input=None, option_flow = False):
 
 
 async def async_common_step_oauth(self, user_input=None, option_flow = False):   # pylint: disable=unused-argument
-	# we should have received the entity ID
-	# now we show the form to enter the oauth user credentials
+	# we should have received the cookie data
 	self._errors = {}
 	#_LOGGER.error("step oauth was just called")
 	if user_input is not None:
@@ -137,72 +119,27 @@ async def async_common_step_oauth(self, user_input=None, option_flow = False):  
 		if CONF_NAME in user_input:
 			self.data[CONF_NAME] = user_input[CONF_NAME].replace(DOMAIN_MP+".","") # make sure to erase "media_player.bla" -> bla
 
-		# skip the complete oauth cycle if unchecked (default)
-		if CONF_RENEW_OAUTH in user_input:
-			if not(user_input[CONF_RENEW_OAUTH]):
-				return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,3, option_flow)), errors=self._errors)
-			
-	return self.async_show_form(step_id="oauth2", data_schema=vol.Schema(await async_create_form(self.hass,user_input,1, option_flow)), errors=self._errors)
+	return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,user_input,3, option_flow)), errors=self._errors)
 
-
-async def async_common_step_oauth2(self, user_input=None, option_flow = False):   # pylint: disable=unused-argument
-	self._errors = {}
-	#_LOGGER.error("step oauth2 was just called")
-	if user_input is not None:
-		self.data.update(user_input)
-#		OAUTH		
-	self.data[CONF_HEADER_PATH] = os.path.join(self.hass.config.path(STORAGE_DIR),DEFAULT_HEADER_FILENAME+self.data[CONF_NAME].replace(' ','_')+'.json')
-	try:
-		self.oauth = await self.hass.async_add_executor_job(lambda: OAuthCredentials(self.data[CONF_CLIENT_ID], self.data[CONF_CLIENT_SECRET], None, None)) 
-		self.code = await self.hass.async_add_executor_job(self.oauth.get_code) 
-		self.data[CONF_CODE] = self.code
-	except:
-		self._errors["base"] = ERROR_OAUTH
-		return self.async_show_form(step_id="oauth2", data_schema=vol.Schema(await async_create_form(self.hass,self.data,1, option_flow)), errors=self._errors)
-
-#		OAUTH
-	return self.async_show_form(step_id="oauth3", data_schema=vol.Schema(await async_create_form(self.hass,self.data,2, option_flow)), errors=self._errors)
-
-async def async_common_step_oauth3(self, user_input=None, option_flow = False):   # pylint: disable=unused-argument
-	self._errors = {}
-	#_LOGGER.error("step oauth3 was just called")
-	self.data.update(user_input)
-	
-	store_token = True
-	if CONF_RENEW_OAUTH in self.data:
-		if not(self.data[CONF_RENEW_OAUTH]):
-			store_token = False
-
-	if store_token:
-		try:
-			self.token = await self.hass.async_add_executor_job(lambda: self.oauth.token_from_code(self.code["device_code"])) 
-			self.refresh_token = RefreshingToken(credentials=self.oauth, **self.token)
-			self.refresh_token.update(self.refresh_token.as_dict())
-		except:
-			self._errors["base"] = ERROR_AUTH_USER
-			user_input = self.data
-			return self.async_show_form(step_id="oauth3", data_schema=vol.Schema(await async_create_form(self.hass,self.data,2, option_flow)), errors=self._errors)
-#		OAUTH	
-	return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,3, option_flow)), errors=self._errors)
 
 
 async def async_common_step_finish(self,user_input=None, option_flow = False):
 	self._errors = {}
 	#_LOGGER.error("step finish was just called")
 	self.data.update(user_input)
-	store_token = True
-	if CONF_RENEW_OAUTH in self.data:
-		if not(self.data[CONF_RENEW_OAUTH]):
-			store_token = False
-	
-	if store_token:
-		await self.hass.async_add_executor_job(lambda: self.refresh_token.store_token(self.data[CONF_HEADER_PATH]))
-	elif self.data[CONF_HEADER_PATH] != self.data[CONF_HEADER_PATH+"_old"]:
-		#_LOGGER.error("moving cookie to "+self.data[CONF_HEADER_PATH])
-		if os.path.exists(self.data[CONF_HEADER_PATH+"_old"]):
-			os.rename(self.data[CONF_HEADER_PATH+"_old"],self.data[CONF_HEADER_PATH])
 
-		
+	# Set header path if not set
+	if CONF_HEADER_PATH not in self.data or not self.data[CONF_HEADER_PATH]:
+		self.data[CONF_HEADER_PATH] = os.path.join(self.hass.config.path(STORAGE_DIR), DEFAULT_HEADER_FILENAME + self.data[CONF_NAME].replace(' ', '_') + '.json')
+
+	# Save cookie data to file
+	cookie_data = {
+		'cookies': self.data.get(CONF_COOKIE, ''),
+		'po_token': self.data.get(CONF_PO_TOKEN, ''),
+		'visitor_data': self.data.get(CONF_VISITOR_DATA, '')
+	}
+	await self.hass.async_add_executor_job(lambda: json.dump(cookie_data, open(self.data[CONF_HEADER_PATH], 'w')))
+
 	if(self.data[CONF_ADVANCE_CONFIG]):
 		return self.async_show_form(step_id="adv_finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,4, option_flow)), errors=self._errors)
 	elif option_flow:
@@ -229,13 +166,10 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 
 	if(page == 0):
 		data_schema[vol.Required(CONF_NAME, default=user_input[CONF_NAME])] = str # name of the component without domain
-		if option_flow:
-			data_schema[vol.Required(CONF_RENEW_OAUTH, default=user_input[CONF_RENEW_OAUTH])] = vol.Coerce(bool) # show page 2
 	elif(page == 1):
-		data_schema[vol.Required(CONF_CLIENT_ID, default=user_input[CONF_CLIENT_ID])] = str # configuration of the cookie
-		data_schema[vol.Required(CONF_CLIENT_SECRET, default=user_input[CONF_CLIENT_SECRET])] = str # configuration of the cookie
-	elif(page == 2):
-		data_schema[vol.Required(CONF_CODE+"TT", default="https://www.google.com/device?user_code="+user_input[CONF_CODE]["user_code"])] = str # name of the component without domain		
+		data_schema[vol.Required(CONF_COOKIE, default=user_input[CONF_COOKIE])] = str # cookie string
+		data_schema[vol.Optional(CONF_PO_TOKEN, default=user_input[CONF_PO_TOKEN])] = str # PO token
+		data_schema[vol.Optional(CONF_VISITOR_DATA, default=user_input[CONF_VISITOR_DATA])] = str # Visitor data
 	elif(page == 3):
 		# Generate a list of excluded entities.
 		# This method is more reliable because it won't become invalid 
