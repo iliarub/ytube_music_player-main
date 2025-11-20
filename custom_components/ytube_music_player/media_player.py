@@ -20,10 +20,10 @@ from homeassistant.helpers.storage import STORAGE_DIR
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_FRIENDLY_NAME
 import homeassistant.components.media_player as media_player
 
-from pytube import YouTube # to generate cipher
-from pytube import request # to generate cipher
-from pytube import extract # to generate cipher
-from pytube.cipher import Cipher
+from pytubefix import YouTube # to generate cipher
+from pytubefix import request # to generate cipher
+from pytubefix import extract # to generate cipher
+from pytubefix.cipher import Cipher
 
 import ytmusicapi
 from ytmusicapi.auth.oauth import OAuthCredentials
@@ -717,7 +717,7 @@ class yTubeMusicComponent(MediaPlayerEntity):
 		embed_html = await self.hass.async_add_executor_job(request.get, embed_url)
 		js_url = extract.js_url(embed_html)
 		self._js = await self.hass.async_add_executor_job(request.get, js_url)
-		self._cipher = Cipher(js=self._js)
+		self._cipher = Cipher(js=self._js, js_url=js_url)
 		# this is why we need pytube as include
 		self.log_me('debug', "[E] async_get_cipher")
 
