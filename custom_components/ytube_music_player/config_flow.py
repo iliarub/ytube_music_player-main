@@ -165,11 +165,11 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 	languages = list(SUPPORTED_LANGUAGES)
 
 	if(page == 0):
-		data_schema[vol.Required(CONF_NAME, default=user_input[CONF_NAME])] = str # name of the component without domain
+		data_schema[vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, DOMAIN))] = str # name of the component without domain
 	elif(page == 1):
-		data_schema[vol.Required(CONF_COOKIE, default=user_input[CONF_COOKIE])] = str # cookie string
-		data_schema[vol.Optional(CONF_PO_TOKEN, default=user_input[CONF_PO_TOKEN])] = str # PO token
-		data_schema[vol.Optional(CONF_VISITOR_DATA, default=user_input[CONF_VISITOR_DATA])] = str # Visitor data
+		data_schema[vol.Required(CONF_COOKIE, default=user_input.get(CONF_COOKIE, ''))] = str # cookie string
+		data_schema[vol.Optional(CONF_PO_TOKEN, default=user_input.get(CONF_PO_TOKEN, ''))] = str # PO token
+		data_schema[vol.Optional(CONF_VISITOR_DATA, default=user_input.get(CONF_VISITOR_DATA, ''))] = str # Visitor data
 	elif(page == 3):
 		# Generate a list of excluded entities.
 		# This method is more reliable because it won't become invalid 
@@ -180,22 +180,22 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 				if DOMAIN_MP in _ytm_player:
 					_exclude_entities.append(_ytm_player[DOMAIN_MP].entity_id)
 
-		data_schema[vol.Required(CONF_RECEIVERS,default=user_input[CONF_RECEIVERS])] = selector({
+		data_schema[vol.Required(CONF_RECEIVERS,default=user_input.get(CONF_RECEIVERS, ''))] = selector({
 				"entity": {
 					"multiple": "true",
 					"filter": [{"domain": DOMAIN_MP}],
 					"exclude_entities": _exclude_entities
 				}
 			})
-		data_schema[vol.Required(CONF_API_LANGUAGE, default=user_input[CONF_API_LANGUAGE])] = selector({
+		data_schema[vol.Required(CONF_API_LANGUAGE, default=user_input.get(CONF_API_LANGUAGE, DEFAULT_API_LANGUAGE))] = selector({
 				"select": {
 					"options": languages,
 					"mode": "dropdown",
 					"sort": True
 				}
 			})
-		data_schema[vol.Required(CONF_HEADER_PATH, default=user_input[CONF_HEADER_PATH])] = str # file path of the header
-		data_schema[vol.Required(CONF_ADVANCE_CONFIG, default=user_input[CONF_ADVANCE_CONFIG])] = vol.Coerce(bool) # show page 2
+		data_schema[vol.Required(CONF_HEADER_PATH, default=user_input.get(CONF_HEADER_PATH, ''))] = str # file path of the header
+		data_schema[vol.Required(CONF_ADVANCE_CONFIG, default=user_input.get(CONF_ADVANCE_CONFIG, False))] = vol.Coerce(bool) # show page 2
 
 	elif(page == 4):
 		data_schema[vol.Optional(CONF_SHUFFLE, default=user_input[CONF_SHUFFLE])] = vol.Coerce(bool) # default shuffle, TRUE/FALSE
