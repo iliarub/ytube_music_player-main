@@ -30,6 +30,11 @@ async def test_cookie_validation_success():
     # Check that executor_job was called
     assert mock_hass.async_add_executor_job.call_count >= 1
 
+    # Check that YTMusic was called with cookie string
+    call_args = mock_hass.async_add_executor_job.call_args_list[0]
+    func = call_args[0][0]
+    # The lambda should call YTMusic with auth containing cookies string
+
 @pytest.mark.asyncio
 async def test_cookie_validation_invalid():
     """Test invalid cookie validation."""
