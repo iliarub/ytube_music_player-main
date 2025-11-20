@@ -68,10 +68,11 @@
     "options": {
         "step": {
             "oauth": {
-                "description": "Lets start with an entity name",
+                "description": "Enter your YouTube Music authentication details",
                 "data": {
-                    "name": "Name for the entity (without 'media_player' prefix)",
-                    "renew_oauth": "Renew OAuth credentials"
+                    "cookie": "Copy cookies from your browser after logging into YouTube Music and paste here as a string",
+                    "po_token": "Optional PO token for enhanced API access",
+                    "visitor_data": "Optional visitor data for YouTube Music API"
                 }
             },
             "oauth2": {
@@ -126,7 +127,11 @@
             "ERROR_CONTENTS": "Format of cookie is OK, found '__Secure-3PAPISID' and '__Secure-3PSID' but can't retrieve any data with this settings, maybe you didn't copy all data?",
             "ERROR_FORMAT": "Format of cookie is NOT OK, likely missing '__Secure-3PAPISID' or '__Secure-3PSID'",
             "ERROR_NONE": "Format of cookie seams OK, but the returned sub API object is None",
-            "ERROR_FORBIDDEN": "YouTube returned a 403 error, meaning that you login data are not longer valid. Please update the cookie"
+            "ERROR_FORBIDDEN": "YouTube returned a 403 error, meaning that you login data are not longer valid. Please update the cookie",
+            "ERROR_COOKIE_FORMAT": "Invalid cookie format. Please check your input and ensure it's copied correctly from the browser.",
+            "ERROR_MISSING_PARAM": "Missing required parameter in cookies (e.g., VISITOR_INFO1_LIVE). Please ensure you copied all necessary cookies.",
+            "ERROR_INVALID_COOKIE": "Cookies are outdated or invalid. Please refresh your browser session and copy fresh cookies.",
+            "ERROR_JSON_SYNTAX": "JSON syntax error in cookies. Please check the format and try again."
 
         }
     },

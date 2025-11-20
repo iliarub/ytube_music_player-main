@@ -131,6 +131,26 @@ async def async_common_step_finish(self,user_input=None, option_flow = False):
 	#_LOGGER.error("step finish was just called")
 	self.data.update(user_input)
 
+	# Validate cookies
+	try:
+		ret, msg, api = await async_try_login(self.hass, '', brand_id=self.data.get(CONF_BRAND_ID, ''), language=self.data.get(CONF_API_LANGUAGE, 'en'), oauth=None, po_token=self.data.get(CONF_PO_TOKEN, ''), visitor_data=self.data.get(CONF_VISITOR_DATA, ''), cookies=self.data.get(CONF_COOKIE, ''))
+		if ret and 'base' in ret:
+			error_code = ret['base']
+			if error_code == ERROR_FORMAT:
+				self._errors["base"] = ERROR_JSON_SYNTAX
+			elif error_code == ERROR_COOKIE:
+				self._errors["base"] = ERROR_COOKIE_FORMAT
+			elif error_code == ERROR_CONTENTS:
+				self._errors["base"] = ERROR_MISSING_PARAM
+			elif error_code == ERROR_FORBIDDEN:
+				self._errors["base"] = ERROR_INVALID_COOKIE
+			else:
+				self._errors["base"] = error_code
+			return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,1, option_flow)), errors=self._errors)
+	except Exception as e:
+		self._errors["base"] = ERROR_GENERIC
+		return self.async_show_form(step_id="finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,1, option_flow)), errors=self._errors)
+
 	# Set header path if not set
 	if CONF_HEADER_PATH not in self.data or not self.data[CONF_HEADER_PATH]:
 		self.data[CONF_HEADER_PATH] = os.path.join(self.hass.config.path(STORAGE_DIR), DEFAULT_HEADER_FILENAME + self.data[CONF_NAME].replace(' ', '_') + '.json')

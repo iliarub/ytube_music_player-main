@@ -177,6 +177,10 @@ ERROR_CONTENTS = 'ERROR_CONTENTS'
 ERROR_FORMAT = 'ERROR_FORMAT'
 ERROR_NONE = 'ERROR_NONE'
 ERROR_FORBIDDEN = 'ERROR_FORBIDDEN'
+ERROR_COOKIE_FORMAT = 'ERROR_COOKIE_FORMAT'
+ERROR_MISSING_PARAM = 'ERROR_MISSING_PARAM'
+ERROR_INVALID_COOKIE = 'ERROR_INVALID_COOKIE'
+ERROR_JSON_SYNTAX = 'ERROR_JSON_SYNTAX'
 
 PLAYMODE_SHUFFLE = "Shuffle"
 PLAYMODE_RANDOM = "Random"
@@ -261,7 +265,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
-async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data=""):
+async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data="", cookies=""):
 	ret = {}
 	api = None
 	msg = ""
@@ -270,14 +274,22 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 		if(oauth):
 			api = await hass.async_add_executor_job(lambda: YTMusic(auth=path,oauth_credentials=oauth,user=brand_id,language=language, po_token=po_token, visitor_data=visitor_data))
 		else:
-			# Load cookie data from file
-			with open(path, 'r') as f:
-				cookie_data = json.load(f)
-			auth_dict = {
-				'cookies': cookie_data.get('cookies', ''),
-				'po_token': cookie_data.get('po_token', po_token),
-				'visitor_data': cookie_data.get('visitor_data', visitor_data)
-			}
+			if path:
+				# Load cookie data from file
+				with open(path, 'r') as f:
+					cookie_data = json.load(f)
+				auth_dict = {
+					'cookies': cookie_data.get('cookies', ''),
+					'po_token': cookie_data.get('po_token', po_token),
+					'visitor_data': cookie_data.get('visitor_data', visitor_data)
+				}
+			else:
+				# Use provided cookies directly
+				auth_dict = {
+					'cookies': cookies,
+					'po_token': po_token,
+					'visitor_data': visitor_data
+				}
 			api = await hass.async_add_executor_job(lambda: YTMusic(auth=auth_dict, user=brand_id, language=language))
 	except KeyError as err:
 		_LOGGER.debug("- Key exception")
