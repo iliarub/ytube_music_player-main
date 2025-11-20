@@ -1,8 +1,120 @@
-from homeassistant.components.sensor import PLATFORM_SCHEMA, ENTITY_ID_FORMAT
-import homeassistant.helpers.config_validation as cv
-from homeassistant.components.media_player import MediaPlayerState, MediaPlayerEntityFeature
-from homeassistant.components.media_player.const import MediaClass, MediaType, RepeatMode
-import voluptuous as vol
+try:
+	from homeassistant.components.sensor import PLATFORM_SCHEMA, ENTITY_ID_FORMAT
+	import homeassistant.helpers.config_validation as cv
+	from homeassistant.components.media_player import MediaPlayerState, MediaPlayerEntityFeature
+	from homeassistant.components.media_player.const import MediaClass, MediaType, RepeatMode
+	import voluptuous as vol
+	from homeassistant.const import (
+		EVENT_HOMEASSISTANT_START,
+		ATTR_ENTITY_ID,
+		CONF_DEVICE_ID,
+		CONF_NAME,
+		CONF_USERNAME,
+		CONF_PASSWORD,
+		STATE_PLAYING,
+		STATE_PAUSED,
+		STATE_ON,
+		STATE_OFF,
+		STATE_IDLE,
+		ATTR_COMMAND,
+	)
+	from homeassistant.components.media_player import (
+		MediaPlayerEntity,
+		PLATFORM_SCHEMA,
+		SERVICE_TURN_ON,
+		SERVICE_TURN_OFF,
+		SERVICE_PLAY_MEDIA,
+		SERVICE_MEDIA_PAUSE,
+		SERVICE_VOLUME_UP,
+		SERVICE_VOLUME_DOWN,
+		SERVICE_VOLUME_SET,
+		ATTR_MEDIA_VOLUME_LEVEL,
+		ATTR_MEDIA_CONTENT_ID,
+		ATTR_MEDIA_CONTENT_TYPE,
+		DOMAIN as DOMAIN_MP,
+	)
+	from homeassistant.components.input_boolean import (
+		SERVICE_TURN_OFF as IB_OFF,
+		SERVICE_TURN_ON as IB_ON,
+		DOMAIN as DOMAIN_IB,
+	)
+	import homeassistant.components.select as select
+	import homeassistant.components.input_select as input_select
+	import homeassistant.components.input_boolean as input_boolean
+except ImportError:
+	# Mock for testing without HA
+	class MockVoluptuous:
+		def Required(self, *args, **kwargs): return lambda x: x
+		def Optional(self, *args, **kwargs): return lambda x: x
+		def Coerce(self, *args): return lambda x: x
+		def In(self, *args): return lambda x: x
+		def Schema(self, *args, **kwargs): return lambda x: x
+		ALLOW_EXTRA = None
+	vol = MockVoluptuous()
+	
+	class MockCV:
+		def string(self, *args, **kwargs): return lambda x: x
+	cv = MockCV()
+	
+	PLATFORM_SCHEMA = None
+	ENTITY_ID_FORMAT = None
+	MediaPlayerState = type('Mock', (), {})()
+	MediaPlayerEntityFeature = type('Mock', (), {
+		'TURN_ON': 1,
+		'TURN_OFF': 2,
+		'PLAY': 4,
+		'PLAY_MEDIA': 8,
+		'PAUSE': 16,
+		'STOP': 32,
+		'VOLUME_SET': 64,
+		'VOLUME_STEP': 128,
+		'VOLUME_MUTE': 256,
+		'PREVIOUS_TRACK': 512,
+		'NEXT_TRACK': 1024,
+		'SHUFFLE_SET': 2048,
+		'REPEAT_SET': 4096,
+		'BROWSE_MEDIA': 8192,
+		'SELECT_SOURCE': 16384,
+		'SEEK': 32768
+	})()
+	MediaClass = type('Mock', (), {})()
+	MediaType = type('Mock', (), {})()
+	RepeatMode = type('Mock', (), {})()
+	
+	EVENT_HOMEASSISTANT_START = "homeassistant_start"
+	ATTR_ENTITY_ID = "entity_id"
+	CONF_DEVICE_ID = "device_id"
+	CONF_NAME = "name"
+	CONF_USERNAME = "username"
+	CONF_PASSWORD = "password"
+	STATE_PLAYING = "playing"
+	STATE_PAUSED = "paused"
+	STATE_ON = "on"
+	STATE_OFF = "off"
+	STATE_IDLE = "idle"
+	ATTR_COMMAND = "command"
+	
+	MediaPlayerEntity = type('Mock', (), {})()
+	SERVICE_TURN_ON = "turn_on"
+	SERVICE_TURN_OFF = "turn_off"
+	SERVICE_PLAY_MEDIA = "play_media"
+	SERVICE_MEDIA_PAUSE = "media_pause"
+	SERVICE_VOLUME_UP = "volume_up"
+	SERVICE_VOLUME_DOWN = "volume_down"
+	SERVICE_VOLUME_SET = "volume_set"
+	ATTR_MEDIA_VOLUME_LEVEL = "volume_level"
+	ATTR_MEDIA_CONTENT_ID = "media_content_id"
+	ATTR_MEDIA_CONTENT_TYPE = "media_content_type"
+	DOMAIN_MP = "media_player"
+	
+	IB_OFF = "turn_off"
+	IB_ON = "turn_on"
+	DOMAIN_IB = "input_boolean"
+	
+	select = type('Mock', (), {})()
+	input_select = type('Mock', (), {})()
+	input_boolean = type('Mock', (), {})()
+
 import logging
 import datetime
 import traceback
@@ -10,49 +122,6 @@ import asyncio
 import json
 from collections import OrderedDict
 from ytmusicapi import YTMusic
-
-
-from homeassistant.const import (
-	EVENT_HOMEASSISTANT_START,
-	ATTR_ENTITY_ID,
-	CONF_DEVICE_ID,
-	CONF_NAME,
-	CONF_USERNAME,
-	CONF_PASSWORD,
-	STATE_PLAYING,
-	STATE_PAUSED,
-	STATE_ON,
-	STATE_OFF,
-	STATE_IDLE,
-	ATTR_COMMAND,
-)
-
-from homeassistant.components.media_player import (
-	MediaPlayerEntity,
-	PLATFORM_SCHEMA,
-	SERVICE_TURN_ON,
-	SERVICE_TURN_OFF,
-	SERVICE_PLAY_MEDIA,
-	SERVICE_MEDIA_PAUSE,
-	SERVICE_VOLUME_UP,
-	SERVICE_VOLUME_DOWN,
-	SERVICE_VOLUME_SET,
-	ATTR_MEDIA_VOLUME_LEVEL,
-	ATTR_MEDIA_CONTENT_ID,
-	ATTR_MEDIA_CONTENT_TYPE,
-	DOMAIN as DOMAIN_MP,
-)
-
-#  add for old settings
-from homeassistant.components.input_boolean import (
-	SERVICE_TURN_OFF as IB_OFF,
-	SERVICE_TURN_ON as IB_ON,
-	DOMAIN as DOMAIN_IB,
-)
-
-import homeassistant.components.select as select
-import homeassistant.components.input_select as input_select  # add for old settings
-import homeassistant.components.input_boolean as input_boolean  # add for old settings
 
 # Should be equal to the name of your component.
 PLATFORMS = {"sensor", "select", "media_player" }
