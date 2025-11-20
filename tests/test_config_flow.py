@@ -18,18 +18,17 @@ VISITOR_DATA = "CgtXaXhubE1RNmpmMCj_jvvIBjIKCgJERRIEEgAgHQ%3D%3D"
 async def test_cookie_validation_success():
     """Test successful cookie validation."""
     mock_hass = MagicMock()
-    mock_hass.async_add_executor_job = AsyncMock()
+    mock_api = MagicMock()
+    mock_api.get_library_songs.return_value = []
+    mock_hass.async_add_executor_job = AsyncMock(return_value=mock_api)
 
-    # Mock successful API response
-    with patch('custom_components.ytube_music_player.const.YTMusic') as mock_ytm:
-        mock_api = MagicMock()
-        mock_ytm.return_value = mock_api
-        mock_api.get_library_songs.return_value = []
-
-        result = await async_try_login(mock_hass, '', cookies=COOKIE_STRING_1, po_token='', visitor_data=VISITOR_DATA)
+    result = await async_try_login(mock_hass, '', cookies=COOKIE_STRING_1, po_token='', visitor_data=VISITOR_DATA)
 
     assert result[0] == {}  # No errors
-    assert result[2] is not None  # API object created
+    assert result[2] is mock_api  # API object created
+
+    # Check that executor_job was called
+    assert mock_hass.async_add_executor_job.call_count >= 1
 
 @pytest.mark.asyncio
 async def test_cookie_validation_invalid():

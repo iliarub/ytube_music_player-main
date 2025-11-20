@@ -334,6 +334,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
+def parse_cookies(cookie_string):
+	"""Parse cookie string into dict."""
+	cookies = {}
+	if cookie_string:
+		for item in cookie_string.split(';'):
+			item = item.strip()
+			if '=' in item:
+				name, value = item.split('=', 1)
+				cookies[name.strip()] = value.strip()
+	return cookies
+
 async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data="", cookies=""):
 	ret = {}
 	api = None
@@ -354,8 +365,9 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 				}
 			else:
 				# Use provided cookies directly
+				cookies_dict = parse_cookies(cookies) if isinstance(cookies, str) else cookies
 				auth_dict = {
-					'cookies': cookies,
+					'cookies': cookies_dict,
 					'po_token': po_token,
 					'visitor_data': visitor_data
 				}
