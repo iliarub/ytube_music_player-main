@@ -357,7 +357,8 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 				auth_dict = {
 					'cookies': cookies,
 					'po_token': po_token,
-					'visitor_data': visitor_data
+					'visitor_data': visitor_data,
+					'browser_cookies': True
 				}
 			api = await hass.async_add_executor_job(lambda: YTMusic(auth=auth_dict, user=brand_id, language=language))
 	except KeyError as err:
