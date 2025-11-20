@@ -442,7 +442,11 @@ async def build_item_response(ytmusicplayer, payload):
 	elif search_type == SEARCH:
 		header_title = SEARCH_TITLE
 		if ytmusicplayer._search is not None:
-			media_all = await hass.async_add_executor_job(lambda: media_library.search(query=ytmusicplayer._search.get('query', ""), filter=ytmusicplayer._search.get('filter', None), limit=int(ytmusicplayer._search.get('limit', 20))))
+			try:
+				media_all = await hass.async_add_executor_job(lambda: media_library.search(query=ytmusicplayer._search.get('query', ""), filter=ytmusicplayer._search.get('filter', None), limit=int(ytmusicplayer._search.get('limit', 20))))
+			except Exception as e:
+				_LOGGER.error("Search failed: %s", str(e))
+				media_all = []
 
 			if(ytmusicplayer._search.get('filter', None) is not None):
 				helper = {}

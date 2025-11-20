@@ -20,13 +20,14 @@ from homeassistant.helpers.storage import STORAGE_DIR
 from homeassistant.const import ATTR_ENTITY_ID, ATTR_FRIENDLY_NAME
 import homeassistant.components.media_player as media_player
 
-from pytubefix import YouTube # to generate cipher
-from pytubefix import request # to generate cipher
-from pytubefix import extract # to generate cipher
+from pytube import YouTube # to generate cipher
+from pytube import request # to generate cipher
+from pytube import extract # to generate cipher
+from pytube.cipher import Cipher
 
 import ytmusicapi
 from ytmusicapi.auth.oauth import OAuthCredentials
-from pytubefix.exceptions import RegexMatchError
+from pytube.exceptions import RegexMatchError
 # use this to work with local version
 # and make sure that the local package is also only loading local files
 # from .ytmusicapi import YTMusic
@@ -118,6 +119,8 @@ class yTubeMusicComponent(MediaPlayerEntity):
 		self._client_id = configuration.get(CONF_CLIENT_ID)
 		self._client_secret = configuration.get(CONF_CLIENT_SECRET)
 		self._brand_id = str(configuration.get(CONF_BRAND_ID, ""))
+		self._po_token = configuration.get(CONF_PO_TOKEN, "")
+		self._visitor_data = configuration.get(CONF_VISITOR_DATA, "")
 		self._api = None
 		self._js = ""
 		self._update_needed = False
@@ -342,7 +345,7 @@ class yTubeMusicComponent(MediaPlayerEntity):
 			self.log_debug_later("- no valid API, try to login")
 			if(os.path.exists(self._header_file)):
 				oauth_credentials=OAuthCredentials(client_id=self._client_id, client_secret=self._client_secret)
-				[ret, msg, self._api] = await async_try_login(self.hass, self._header_file, self._brand_id, self._api_language,oauth_credentials)
+				[ret, msg, self._api] = await async_try_login(self.hass, self._header_file, self._brand_id, self._api_language,oauth_credentials, self._po_token, self._visitor_data)
 				if(msg != ""):
 					self._api = None
 					out = "Issue during login: " + msg
@@ -710,12 +713,12 @@ class yTubeMusicComponent(MediaPlayerEntity):
 	async def async_get_cipher(self, videoId):
 		self.log_debug_later("[S] async_get_cipher")
 		embed_url = "https://www.youtube.com/embed/" + videoId
-		# this is why we need pytubefix as include 
+		# this is why we need pytube as include
 		embed_html = await self.hass.async_add_executor_job(request.get, embed_url)
 		js_url = extract.js_url(embed_html)
 		self._js = await self.hass.async_add_executor_job(request.get, js_url)
-		self._cipher = pytubefix.cipher.Cipher(js=self._js, js_url=js_url)
-		# this is why we need pytubefix as include 
+		self._cipher = Cipher(js=self._js)
+		# this is why we need pytube as include
 		self.log_me('debug', "[E] async_get_cipher")
 
 	async def async_sync_player(self, event=None):

@@ -293,6 +293,8 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 
 		data_schema[vol.Optional(CONF_PROXY_PATH, default=user_input[CONF_PROXY_PATH])] = str # select of input_boolean -> continuous on/off
 		data_schema[vol.Optional(CONF_PROXY_URL, default=user_input[CONF_PROXY_URL])] = str # select of input_boolean -> continuous on/off
+		data_schema[vol.Optional(CONF_PO_TOKEN, default=user_input[CONF_PO_TOKEN])] = str # PO token for YouTube Music API
+		data_schema[vol.Optional(CONF_VISITOR_DATA, default=user_input[CONF_VISITOR_DATA])] = str # Visitor data for YouTube Music API
 
 	return data_schema
 

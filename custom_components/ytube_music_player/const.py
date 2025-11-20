@@ -130,6 +130,8 @@ CONF_INIT_DROPDOWNS = 'dropdowns'
 ALL_DROPDOWNS = ["playlists","speakers","playmode","radiomode","repeatmode"]
 DEFAULT_INIT_DROPDOWNS = ["playlists","speakers","playmode"]
 CONF_MAX_DATARATE = 'max_datarate'
+CONF_PO_TOKEN = 'po_token'
+CONF_VISITOR_DATA = 'visitor_data'
 
 CONF_TRACK_LIMIT = 'track_limit'
 CONF_PROXY_URL = 'proxy_url'
@@ -258,16 +260,16 @@ _LOGGER = logging.getLogger(__name__)
 
 
 
-async def async_try_login(hass, path, brand_id=None, language='en',oauth=None):
+async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data=""):
 	ret = {}
 	api = None
 	msg = ""
 	#### try to init object #####
 	try:
 		if(oauth):
-			api = await hass.async_add_executor_job(lambda: YTMusic(auth=path,oauth_credentials=oauth,user=brand_id,language=language))
+			api = await hass.async_add_executor_job(lambda: YTMusic(auth=path,oauth_credentials=oauth,user=brand_id,language=language, po_token=po_token, visitor_data=visitor_data))
 		else:
-			api = await hass.async_add_executor_job(YTMusic,path,brand_id,None,None,language)
+			api = await hass.async_add_executor_job(lambda: YTMusic(path,brand_id,None,None,language, po_token=po_token, visitor_data=visitor_data))
 	except KeyError as err:
 		_LOGGER.debug("- Key exception")
 		if(str(err)=="'contents'"):
@@ -347,6 +349,8 @@ def ensure_config(user_input):
 	out[CONF_INIT_EXTRA_SENSOR] = DEFAULT_INIT_EXTRA_SENSOR
 	out[CONF_INIT_DROPDOWNS] = DEFAULT_INIT_DROPDOWNS
 	out[CONF_MAX_DATARATE] = DEFAULT_MAX_DATARATE
+	out[CONF_PO_TOKEN] = ""
+	out[CONF_VISITOR_DATA] = ""
 
 	if user_input is not None:
 		#  for the old shuffle_mode setting.
