@@ -70,9 +70,9 @@
             "oauth": {
                 "description": "Enter your YouTube Music authentication details",
                 "data": {
-                    "cookie": "Copy cookies from your browser after logging into YouTube Music and paste here as a string",
-                    "po_token": "Optional PO token for enhanced API access",
-                    "visitor_data": "Optional visitor data for YouTube Music API"
+                    "cookie": "Copy the entire 'Cookie' header from your browser's developer tools after logging into YouTube Music. Right-click on the page > Inspect > Network tab > Refresh > Select a request to music.youtube.com > Headers > Copy 'Cookie' value.",
+                    "po_token": "Required PO token to bypass bot detection. Obtain using the script from https://github.com/sigma67/ytmusicapi#po-token",
+                    "visitor_data": "Required visitor data to bypass bot detection. Obtain using the script from https://github.com/sigma67/ytmusicapi#visitor-data"
                 }
             },
             "oauth2": {
@@ -87,7 +87,7 @@
                 "data": {}
             },
             "finish": {
-                "description": "Please enter the path and the cookie data. Further information available at https://github.com/KoljaWindeler/ytube_music_player. As of November 2024, YouTube Music requires a Client Id and Secret for the YouTube Data API to connect to the API. Please open https://console.cloud.google.com/apis/credentials, click create credentials -> OAuth Client ID and  pick TVs and Limited Input devices.",
+                "description": "Please enter the cookie data, PO token, and visitor data for YouTube Music authentication. These are required to bypass bot detection as of November 2024. See https://github.com/sigma67/ytmusicapi for instructions on obtaining PO token and visitor data.",
                 "data": {
                     "speakers": "Select the output devices, the first one will be the default device",
                     "api_language": "The language parameter of the ytmusicapi, which determines the language of the returned results",

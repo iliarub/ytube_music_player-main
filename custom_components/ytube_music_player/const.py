@@ -332,6 +332,21 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend = vol.Schema({
 # Shortcut for the logger
 _LOGGER = logging.getLogger(__name__)
 
+def parse_cookies(cookie_string):
+    """Parse cookie string into dictionary, keeping only relevant cookies."""
+    cookies = {}
+    if not cookie_string:
+        return cookies
+    relevant = {'__Secure-3PAPISID', '__Secure-3PSID', 'SAPISID', 'APISID', 'SID', '__Secure-1PAPISID', '__Secure-1PSID', 'HSID', 'SSID'}
+    for item in cookie_string.split(';'):
+        item = item.strip()
+        if '=' in item:
+            name, value = item.split('=', 1)
+            name = name.strip()
+            if name in relevant:
+                cookies[name] = value.strip()
+    return cookies
+
 
 
 async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data="", cookies=""):
@@ -354,13 +369,13 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 				}
 			else:
 				# Use provided cookies directly as string
-				auth_dict = {
-					'cookies': cookies,
-					'po_token': po_token,
-					'visitor_data': visitor_data,
-					'browser_cookies': True
-				}
-			api = await hass.async_add_executor_job(lambda: YTMusic(auth=auth_dict, user=brand_id, language=language))
+				headers = {'Cookie': cookies}
+				api = YTMusic()
+				api._auth_headers.update(headers)
+				if po_token:
+					api.po_token = po_token
+				if visitor_data:
+					api.visitor_data = visitor_data
 	except KeyError as err:
 		_LOGGER.debug("- Key exception")
 		if(str(err)=="'contents'"):
@@ -381,10 +396,12 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 			_LOGGER.error("please see below")
 			_LOGGER.error(traceback.format_exc())
 			ret["base"] = ERROR_GENERIC
-	except:
+	except Exception as e:
 		_LOGGER.debug("- Generic exception")
 		msg = "Format of cookie is NOT OK, missing e.g. AuthUser or Cookie"
 		_LOGGER.error(msg)
+		_LOGGER.error(f"Exception: {e}")
+		_LOGGER.error(traceback.format_exc())
 		ret["base"] = ERROR_FORMAT
 
 	#### try to grab library data #####
