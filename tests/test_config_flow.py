@@ -18,7 +18,7 @@ async def test_cookie_validation_success():
     mock_hass = MagicMock()
     mock_hass.async_add_executor_job = lambda func: func()
 
-    result = await async_try_login(mock_hass, '', cookies=REAL_COOKIE, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
+    result = await async_try_login(mock_hass, '', brand_id='', language='en', cookies=REAL_COOKIE, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
 
     # Since cookies may be invalid or expired, check if API object is created
     assert result[2] is not None  # API object created
@@ -31,7 +31,25 @@ async def test_cookie_string_formats(cookie_string):
     mock_hass = MagicMock()
     mock_hass.async_add_executor_job = lambda func: func()
 
-    result = await async_try_login(mock_hass, '', cookies=cookie_string, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
+    result = await async_try_login(mock_hass, '', brand_id='', language='en', cookies=cookie_string, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
 
+    assert result[0] == {}  # No errors
+    assert result[2] is not None  # API object created
+
+
+@pytest.mark.asyncio
+async def test_cookie_validation_with_whitespace():
+    """Test cookie validation with extra whitespace and newlines as if user pasted."""
+    mock_hass = MagicMock()
+    mock_hass.async_add_executor_job = lambda func: func()
+
+    # Simulate user input with extra spaces and newlines
+    dirty_cookie = "  " + REAL_COOKIE.replace(";", ";\n") + " \n"
+    dirty_po_token = " \n " + REAL_PO_TOKEN + " \r\n"
+    dirty_visitor_data = "\t" + REAL_VISITOR_DATA + "\n"
+
+    result = await async_try_login(mock_hass, '', brand_id='', language='en', cookies=dirty_cookie, po_token=dirty_po_token, visitor_data=dirty_visitor_data)
+
+    # Should succeed after cleaning
     assert result[0] == {}  # No errors
     assert result[2] is not None  # API object created

@@ -132,12 +132,14 @@ async def async_common_step_finish(self,user_input=None, option_flow = False):
 	self.data.update(user_input)
 
 	# Validate cookies
+	_LOGGER.debug("Starting cookie validation in config_flow")
 	try:
 		ret, msg, api = await async_try_login(self.hass, '', brand_id=self.data.get(CONF_BRAND_ID, ''), language=self.data.get(CONF_API_LANGUAGE, 'en'), oauth=None, po_token=self.data.get(CONF_PO_TOKEN, ''), visitor_data=self.data.get(CONF_VISITOR_DATA, ''), cookies=self.data.get(CONF_COOKIE, ''))
+		_LOGGER.debug("async_try_login returned: ret=%s, msg='%s', api is not None: %s", ret, msg, api is not None)
 		if ret and 'base' in ret:
 			error_code = ret['base']
 			if error_code == ERROR_FORMAT:
-				self._errors["base"] = ERROR_JSON_SYNTAX
+				self._errors["base"] = ERROR_INVALID_COOKIE
 			elif error_code == ERROR_COOKIE:
 				self._errors["base"] = ERROR_COOKIE_FORMAT
 			elif error_code == ERROR_CONTENTS:

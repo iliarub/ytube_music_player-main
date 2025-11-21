@@ -350,6 +350,11 @@ def parse_cookies(cookie_string):
 
 
 async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, po_token="", visitor_data="", cookies=""):
+	_LOGGER.debug("async_try_login called with path='%s', brand_id='%s', language='%s', oauth=%s", path, brand_id, language, oauth is not None)
+	po_token = po_token.strip().replace('\n', '').replace('\r', '')
+	visitor_data = visitor_data.strip().replace('\n', '').replace('\r', '')
+	cookies = cookies.strip().replace('\n', '').replace('\r', '')
+	_LOGGER.debug("Cleaned inputs: po_token length=%d, visitor_data length=%d, cookies length=%d", len(po_token), len(visitor_data), len(cookies))
 	ret = {}
 	api = None
 	msg = ""
@@ -369,13 +374,21 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 				}
 			else:
 				# Use provided cookies directly as string
+				_LOGGER.debug("Creating YTMusic with cookies")
 				headers = {'Cookie': cookies}
-				api = YTMusic()
-				api._auth_headers.update(headers)
+				try:
+					api = YTMusic()
+					api._auth_headers.update(headers)
+					_LOGGER.debug("YTMusic created and headers updated")
+				except Exception as e:
+					_LOGGER.error("Failed to create YTMusic or update headers: %s", e)
+					raise
 				if po_token:
 					api.po_token = po_token
+					_LOGGER.debug("Set po_token")
 				if visitor_data:
 					api.visitor_data = visitor_data
+					_LOGGER.debug("Set visitor_data")
 	except KeyError as err:
 		_LOGGER.debug("- Key exception")
 		if(str(err)=="'contents'"):
@@ -410,8 +423,10 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 		_LOGGER.error(msg)
 		ret["base"] = ERROR_NONE
 	elif(not(api == None) and ret == {}):
+		_LOGGER.debug("Testing connection with get_library_songs")
 		try:
 			await hass.async_add_executor_job(api.get_library_songs)
+			_LOGGER.debug("get_library_songs succeeded")
 		except KeyError as err:
 			if(str(err)=="'contents'"):
 				msg = "Format of cookie is OK, found '__Secure-3PAPISID' and '__Secure-3PSID' but can't retrieve any data with this settings, maybe you didn't copy all data? Or did you log-out?"
