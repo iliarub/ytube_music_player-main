@@ -360,18 +360,40 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 	msg = ""
 	#### try to init object #####
 	try:
-		if(oauth):
-			api = await hass.async_add_executor_job(lambda: YTMusic(auth=path,oauth_credentials=oauth,user=brand_id,language=language, po_token=po_token, visitor_data=visitor_data))
+		if isinstance(oauth, bool) and oauth:
+			# Load from file for oauth flow
+			with open(path, 'r') as f:
+				cookie_data = json.load(f)
+			_LOGGER.debug("Loaded cookie_data from %s: cookies length=%d, po_token length=%d, visitor_data length=%d", path, len(cookie_data.get('cookies', '')), len(cookie_data.get('po_token', '')), len(cookie_data.get('visitor_data', '')))
+			cookies_str = cookie_data.get('cookies', '')
+			po_token = cookie_data.get('po_token', po_token)
+			visitor_data = cookie_data.get('visitor_data', visitor_data)
+			headers = {'Cookie': cookies_str}
+			api = await hass.async_add_executor_job(lambda: YTMusic())
+			api._auth_headers.update(headers)
+			if po_token:
+				api.po_token = po_token
+			if visitor_data:
+				api.visitor_data = visitor_data
+		elif isinstance(oauth, str):
+			# oauth is cookies string
+			api = await hass.async_add_executor_job(lambda: YTMusic(auth=oauth, user=brand_id, language=language))
+			if po_token:
+				api.po_token = po_token
+			if visitor_data:
+				api.visitor_data = visitor_data
 		else:
 			if path:
-				# Load cookie data from file
+				# Load auth_dict for oauth flow
 				with open(path, 'r') as f:
 					cookie_data = json.load(f)
+				_LOGGER.debug("Loaded cookie_data from %s: cookies length=%d, po_token length=%d, visitor_data length=%d", path, len(cookie_data.get('cookies', '')), len(cookie_data.get('po_token', '')), len(cookie_data.get('visitor_data', '')))
 				auth_dict = {
 					'cookies': cookie_data.get('cookies', ''),
 					'po_token': cookie_data.get('po_token', po_token),
 					'visitor_data': cookie_data.get('visitor_data', visitor_data)
 				}
+				api = await hass.async_add_executor_job(lambda: YTMusic(auth=auth_dict, user=brand_id, language=language))
 			else:
 				# Use provided cookies directly as string
 				_LOGGER.debug("Creating YTMusic with cookies")
