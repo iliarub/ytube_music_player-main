@@ -15,8 +15,10 @@ REAL_PO_TOKEN = "MlVj7iWKelGXQmPQLRSOYDK69eaOtQa5nMtZ-PX7IM_Jsrdak4t9mNK6OXIhEaG
 @pytest.mark.asyncio
 async def test_cookie_validation_success():
     """Test successful cookie validation."""
+    async def mock_executor(func):
+        return func()
     mock_hass = MagicMock()
-    mock_hass.async_add_executor_job = lambda func: func()
+    mock_hass.async_add_executor_job = mock_executor
 
     result = await async_try_login(mock_hass, '', brand_id='', language='en', cookies=REAL_COOKIE, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
 
@@ -28,8 +30,10 @@ async def test_cookie_validation_success():
 @pytest.mark.asyncio
 async def test_cookie_string_formats(cookie_string):
     """Test different cookie string formats are accepted."""
+    async def mock_executor(func):
+        return func()
     mock_hass = MagicMock()
-    mock_hass.async_add_executor_job = lambda func: func()
+    mock_hass.async_add_executor_job = mock_executor
 
     result = await async_try_login(mock_hass, '', brand_id='', language='en', cookies=cookie_string, po_token=REAL_PO_TOKEN, visitor_data=REAL_VISITOR_DATA)
 
@@ -40,8 +44,10 @@ async def test_cookie_string_formats(cookie_string):
 @pytest.mark.asyncio
 async def test_cookie_validation_with_whitespace():
     """Test cookie validation with extra whitespace and newlines as if user pasted."""
+    async def mock_executor(func):
+        return func()
     mock_hass = MagicMock()
-    mock_hass.async_add_executor_job = lambda func: func()
+    mock_hass.async_add_executor_job = mock_executor
 
     # Simulate user input with extra spaces and newlines
     dirty_cookie = "  " + REAL_COOKIE.replace(";", ";\n") + " \n"

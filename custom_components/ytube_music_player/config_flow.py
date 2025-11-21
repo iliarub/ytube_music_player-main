@@ -168,7 +168,7 @@ async def async_common_step_finish(self,user_input=None, option_flow = False):
 		json.dump(cookie_data, open(self.data[CONF_HEADER_PATH], 'w'))
 	))
 
-	if(self.data[CONF_ADVANCE_CONFIG]):
+	if(self.data.get(CONF_ADVANCE_CONFIG, False)):
 		return self.async_show_form(step_id="adv_finish", data_schema=vol.Schema(await async_create_form(self.hass,self.data,4, option_flow)), errors=self._errors)
 	elif option_flow:
 		return self.async_create_entry(data = self.data)

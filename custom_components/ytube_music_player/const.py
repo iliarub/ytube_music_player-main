@@ -377,7 +377,7 @@ async def async_try_login(hass, path, brand_id=None, language='en',oauth=None, p
 				_LOGGER.debug("Creating YTMusic with cookies")
 				headers = {'Cookie': cookies}
 				try:
-					api = YTMusic()
+					api = await hass.async_add_executor_job(lambda: YTMusic())
 					api._auth_headers.update(headers)
 					_LOGGER.debug("YTMusic created and headers updated")
 				except Exception as e:
