@@ -199,8 +199,8 @@ async def async_create_form(hass, user_input, page=1, option_flow = False):
 		data_schema[vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, DOMAIN))] = str # name of the component without domain
 	elif(page == 1):
 		data_schema[vol.Required(CONF_COOKIE, default=user_input.get(CONF_COOKIE, ''))] = str # cookie string
-		data_schema[vol.Required(CONF_PO_TOKEN, default=user_input.get(CONF_PO_TOKEN, ''))] = str # PO token (required for bot detection bypass)
-		data_schema[vol.Required(CONF_VISITOR_DATA, default=user_input.get(CONF_VISITOR_DATA, ''))] = str # Visitor data (required for bot detection bypass)
+		data_schema[vol.Required(CONF_PO_TOKEN)] = vol.All(str, vol.Length(min=1)) # PO token (required for bot detection bypass)
+		data_schema[vol.Required(CONF_VISITOR_DATA)] = vol.All(str, vol.Length(min=1)) # Visitor data (required for bot detection bypass)
 	elif(page == 3):
 		# Generate a list of excluded entities.
 		# This method is more reliable because it won't become invalid 
